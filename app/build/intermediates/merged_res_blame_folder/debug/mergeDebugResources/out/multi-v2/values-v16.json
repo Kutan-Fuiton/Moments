@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.iykyk.collage.app-mergeDebugResources-2:/values-v16/values-v16.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\Subarno Chakraborty\\.gradle\\caches\\9.3.0\\transforms\\9e0eafb7509637ac73cd5e1d8411c685\\workspace\\transformed\\appcompat-1.6.1\\res\\values-v16\\values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "5",
+                        "endColumns": "12",
+                        "endOffsets": "223"
+                    }
+                }
+            ]
+        }
+    ]
+}
