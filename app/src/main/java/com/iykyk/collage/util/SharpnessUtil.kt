@@ -59,8 +59,8 @@ object SharpnessUtil {
         val mean = sum / count
         val variance = (sumSq / count) - (mean * mean)
 
-        cropped.recycle()
-        scaled.recycle()
+        if (cropped !== bitmap && !cropped.isRecycled) cropped.recycle()
+        if (scaled !== cropped && scaled !== bitmap && !scaled.isRecycled) scaled.recycle()
         return variance.toFloat()
     }
 }

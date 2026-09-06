@@ -70,7 +70,7 @@ class CollageViewModel(app: Application) : AndroidViewModel(app) {
                         _uiState.value = UiState.Processing(progress, label)
                     }
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 _uiState.value = UiState.Error(e.message ?: "Something went wrong while analyzing the video")
             }
         }
@@ -90,11 +90,10 @@ class CollageViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 val current = _uiState.value
                 if (current is UiState.Result) {
-                    // Recycle old collage bitmap to free GPU/native memory
-                    val old = current.result.collageBitmap
                     _uiState.value = UiState.Result(current.result.copy(collageBitmap = newCollage))
-                    if (!old.isRecycled) old.recycle()
                 }
+            } catch (e: Throwable) {
+                // Keep existing collage if regeneration encounters an issue
             } finally {
                 _isRegenerating.value = false
             }

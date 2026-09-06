@@ -197,7 +197,7 @@ object CollageGenerator {
             color = Color.parseColor("#3A3C49"); style = Paint.Style.STROKE; strokeWidth = 1f })
         canvas.drawText(info, pl + ph, pb - pv - 2f, tp)
 
-        scaled.recycle(); crop.recycle()
+        safeRecycle(scaled, crop, rep.frameBitmap)
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -240,10 +240,9 @@ object CollageGenerator {
             val cx = 40f + c * (cardW + 24f)
             val cy = startY + r * (cardH + 24f)
 
-            // Shadow
+            // Soft drop shadow
             canvas.drawRoundRect(RectF(cx + 4f, cy + 4f, cx + cardW + 4f, cy + cardH + 4f),
-                6f, 6f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = Color.parseColor("#40000000"); maskFilter = BlurMaskFilter(8f, BlurMaskFilter.Blur.NORMAL) })
+                6f, 6f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#33000000") })
 
             // Card
             canvas.drawRoundRect(RectF(cx, cy, cx + cardW, cy + cardH),
@@ -261,7 +260,7 @@ object CollageGenerator {
                 canvas.save(); canvas.clipPath(photoPath)
                 canvas.drawBitmap(scaled, cx, cy, null)
                 canvas.restore()
-                scaled.recycle(); crop.recycle()
+                safeRecycle(scaled, crop, rep.frameBitmap)
             }
 
             // Caption area
@@ -316,7 +315,7 @@ object CollageGenerator {
                 canvas.drawRect(0f, curY, tileW, curY + tileH,
                     Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#1F8B7355") })
 
-                scaled.recycle(); crop.recycle()
+                safeRecycle(scaled, crop, rep.frameBitmap)
             } else {
                 canvas.drawRect(0f, curY, tileW, curY + tileH,
                     Paint().apply { color = Color.parseColor("#1A1A1A") })
@@ -394,7 +393,7 @@ object CollageGenerator {
                 canvas.save(); canvas.clipPath(path)
                 canvas.drawBitmap(scaled, left, top, null)
                 canvas.restore()
-                scaled.recycle(); crop.recycle()
+                safeRecycle(scaled, crop, rep.frameBitmap)
             } else {
                 canvas.drawRect(left, top, right, bottom,
                     Paint().apply { color = Color.parseColor("#1A1A1A") })
@@ -420,18 +419,28 @@ object CollageGenerator {
         if (frame.isRecycled) return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
         val cx = (box.left + box.right) / 2f
         val cy = (box.top + box.bottom) / 2f
-        val faceW = box.right - box.left
-        val faceH = box.bottom - box.top
+        val faceW = max(1f, box.right - box.left)
+        val faceH = max(1f, box.bottom - box.top)
         val side = min(
             min(frame.width.toFloat(), frame.height.toFloat()),
             max(faceW, faceH) * factor,
-        )
+        ).coerceAtLeast(16f)
         val left = (cx - side / 2f).coerceIn(0f, max(0f, frame.width - side))
         val top  = (cy - side / 2f).coerceIn(0f, max(0f, frame.height - side))
+        val sideInt = min(side.toInt(), min(frame.width - left.toInt(), frame.height - top.toInt())).coerceAtLeast(1)
         return try {
-            Bitmap.createBitmap(frame, left.toInt(), top.toInt(), side.toInt(), side.toInt())
+            Bitmap.createBitmap(frame, left.toInt(), top.toInt(), sideInt, sideInt)
         } catch (e: Exception) {
             Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+        }
+    }
+
+    private fun safeRecycle(scaled: Bitmap?, crop: Bitmap?, repFrame: Bitmap?) {
+        if (scaled != null && scaled !== crop && scaled !== repFrame && !scaled.isRecycled) {
+            scaled.recycle()
+        }
+        if (crop != null && crop !== repFrame && !crop.isRecycled) {
+            crop.recycle()
         }
     }
 

@@ -137,4 +137,14 @@ class FaceClustererTest {
         assertTrue("All 5 people must be represented (at least 5 clusters)", clusters.size >= 5)
         assertEquals("Exactly 5 distinct individuals preserved", 5, clusters.size)
     }
+
+    @Test
+    fun testAllTemplatesAvailable() {
+        val templates = CollageTemplate.all
+        assertEquals(4, templates.size)
+        assertTrue(templates.contains(CollageTemplate.Editorial))
+        assertTrue(templates.contains(CollageTemplate.Polaroid))
+        assertTrue(templates.contains(CollageTemplate.Cinematic))
+        assertTrue(templates.contains(CollageTemplate.Mosaic))
+    }
 }

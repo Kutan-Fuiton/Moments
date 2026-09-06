@@ -73,16 +73,20 @@ object MultiPersonFrameSplitter {
         val cx = (box.left + box.right) / 2f
         val cy = (box.top + box.bottom) / 2f
         val faceSize = max(box.right - box.left, box.bottom - box.top)
+        if (faceSize <= 0f) return null
         val side = min(
             min(frame.width.toFloat(), frame.height.toFloat()),
             faceSize * CROP_FACTOR,
         )
+        if (side < MIN_CROP_PX) return null
 
         val left = (cx - side / 2f).coerceIn(0f, max(0f, frame.width - side))
         val top  = (cy - side / 2f).coerceIn(0f, max(0f, frame.height - side))
+        val sideInt = min(side.toInt(), min(frame.width - left.toInt(), frame.height - top.toInt()))
+        if (sideInt < MIN_CROP_PX) return null
 
         return try {
-            Bitmap.createBitmap(frame, left.toInt(), top.toInt(), side.toInt(), side.toInt())
+            Bitmap.createBitmap(frame, left.toInt(), top.toInt(), sideInt, sideInt)
         } catch (e: Exception) {
             null
         }

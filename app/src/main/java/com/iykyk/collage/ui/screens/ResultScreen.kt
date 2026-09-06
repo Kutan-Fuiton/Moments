@@ -122,13 +122,10 @@ fun ResultScreen(
                         .border(1.dp, StudioBorder, RoundedCornerShape(18.dp)),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        AnimatedContent(
+                        Crossfade(
                             targetState = result.collageBitmap,
-                            transitionSpec = {
-                                fadeIn(animationSpec = tween(500)) togetherWith
-                                    fadeOut(animationSpec = tween(300))
-                            },
-                            label = "collageTransition",
+                            animationSpec = tween(400),
+                            label = "collageCrossfade",
                         ) { bitmap ->
                             Image(
                                 bitmap = bitmap.asImageBitmap(),
@@ -411,7 +408,7 @@ private fun PersonCard(
 
                 val presenceFraction = (person.appearanceCount.toFloat() / maxAppearances).coerceIn(0.1f, 1f)
                 LinearProgressIndicator(
-                    progress = { presenceFraction },
+                    progress = presenceFraction,
                     modifier = Modifier.fillMaxWidth().height(3.dp).clip(RoundedCornerShape(2.dp)),
                     color = StudioAccent,
                     trackColor = StudioBorder,
@@ -436,22 +433,23 @@ private fun cropFaceThumbnail(observation: FaceObservation?): Bitmap? {
     val frame = observation.frameBitmap
     if (frame.isRecycled) return null
     val box = observation.boundingBox
+    val faceW = maxOf(1f, box.right - box.left)
+    val faceH = maxOf(1f, box.bottom - box.top)
     val side = kotlin.math.min(
         frame.width.toFloat(),
-        kotlin.math.min(frame.height.toFloat(), maxOf(box.right - box.left, box.bottom - box.top) * 1.4f),
-    )
+        kotlin.math.min(frame.height.toFloat(), maxOf(faceW, faceH) * 1.4f),
+    ).coerceAtLeast(16f)
     val cx = (box.left + box.right) / 2f
     val cy = (box.top + box.bottom) / 2f
-    var left = cx - side / 2
-    var top = cy - side / 2
-    if (left < 0) left = 0f
-    if (top < 0) top = 0f
-    if (left + side > frame.width) left = frame.width - side
-    if (top + side > frame.height) top = frame.height - side
+    val left = (cx - side / 2f).coerceIn(0f, maxOf(0f, frame.width - side))
+    val top = (cy - side / 2f).coerceIn(0f, maxOf(0f, frame.height - side))
+    val sideInt = kotlin.math.min(side.toInt(), kotlin.math.min(frame.width - left.toInt(), frame.height - top.toInt())).coerceAtLeast(1)
     return try {
-        val cropped = Bitmap.createBitmap(frame, left.toInt(), top.toInt(), side.toInt(), side.toInt())
+        val cropped = Bitmap.createBitmap(frame, left.toInt(), top.toInt(), sideInt, sideInt)
         val scaled = Bitmap.createScaledBitmap(cropped, 128, 128, true)
-        if (cropped != scaled) cropped.recycle()
+        if (cropped !== frame && cropped !== scaled && !cropped.isRecycled) {
+            cropped.recycle()
+        }
         scaled
     } catch (e: Exception) { null }
 }
